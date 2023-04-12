@@ -10,4 +10,9 @@ return [
      * Path to composer in your cPanel
      */
     'composer_path' => '',
+
+    /**
+     * Name of the branch to listen for changes
+     */
+    'branch' => '',
 ];

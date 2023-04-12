@@ -21,6 +21,9 @@ class KeepMeSyncedController extends Controller
     {
         try {
             $this->validateConfig();
+            if ($this->isCorrectBranch($request)) {
+                return new JsonResponse(['success' => true]);
+            }
             $this->setMsg($request);
 
             SlackService::deploy('Updating', 'Updating application `' . $this->msg . '`');
@@ -52,6 +55,10 @@ class KeepMeSyncedController extends Controller
         if (empty(config('keep_me_synced.composer_path'))) {
             throw new KeepMeSyncedException('No composer path set.');
         }
+
+        if (empty(config('keep_me_synced.branch'))) {
+            throw new KeepMeSyncedException('No branch set.');
+        }
     }
 
     /**
@@ -63,6 +70,14 @@ class KeepMeSyncedController extends Controller
         if (empty($this->msg)) {
             throw new KeepMeSyncedException('No commit message sent.');
         }
+    }
+
+    /**
+     * @throws KeepMeSyncedException
+     */
+    private function isCorrectBranch(Request $request): bool
+    {
+        return $request->get('ref') === 'refs/heads/' . config('keep_me_synced.branch');
     }
 
     /**
