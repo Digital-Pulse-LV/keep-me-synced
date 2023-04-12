@@ -23,7 +23,7 @@ class KeepMeSyncedController extends Controller
             $this->validateConfig();
             $this->setMsg($request);
 
-            SlackService::deploy('Updating', 'Updating application... `' . $this->msg . '`');
+            SlackService::deploy('Updating', 'Updating application `' . $this->msg . '`');
 
             $this->runGitPull();
             $this->runComposer();
