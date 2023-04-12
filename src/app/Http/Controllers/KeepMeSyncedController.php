@@ -22,7 +22,7 @@ class KeepMeSyncedController extends Controller
     {
         $gitCommitMsg = $request->get('head_commit')['message'] ?? 'Unknown commit msg';
 
-        SlackService::deploy('Updating', 'Updating application...');
+        SlackService::deploy('Updating', 'Updating application... `' . $gitCommitMsg . '`');
 
         try {
             $this->runPull();
