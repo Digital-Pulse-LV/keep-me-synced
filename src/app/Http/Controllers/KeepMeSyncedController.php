@@ -1,9 +1,9 @@
 <?php
 
-namespace DigitalPulse\KeepMesynced\app\Http\Controllers;
+namespace DigitalPulse\KeepMeSynced\app\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use DigitalPulse\KeepMesynced\app\Exceptions\KeepMeSyncedException;
+use DigitalPulse\KeepMeSynced\app\Exceptions\KeepMeSyncedException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Artisan;

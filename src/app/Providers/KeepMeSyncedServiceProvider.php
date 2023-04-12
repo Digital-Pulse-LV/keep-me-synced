@@ -1,6 +1,6 @@
 <?php
 
-namespace DigitalPulse\KeepMesynced\app\Providers;
+namespace DigitalPulse\KeepMeSynced\app\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Contracts\Http\Kernel;

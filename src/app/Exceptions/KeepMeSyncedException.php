@@ -1,6 +1,6 @@
 <?php
 
-namespace DigitalPulse\KeepMesynced\app\Exceptions;
+namespace DigitalPulse\KeepMeSynced\app\Exceptions;
 
 use Exception;
 
