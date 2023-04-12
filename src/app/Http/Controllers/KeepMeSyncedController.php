@@ -69,7 +69,7 @@ class KeepMeSyncedController extends Controller
             throw new KeepMeSyncedException('Error while running `composer update`: no composer path set.');
         }
 
-        $process = new Process([config('keep_me_synced.composer_path'), 'update --no-dev --working-dir=' . config('keep_me_synced.working_dir')]);
+        $process = new Process([config('keep_me_synced.composer_path'), 'update', '--no-dev', '--working-dir=' . config('keep_me_synced.working_dir')]);
         $process->run(function ($type, $buffer) {
             if ($buffer == 'Already up to date.') {
                 $this->alreadyUpToDate = true;

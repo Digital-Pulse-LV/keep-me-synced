@@ -7,7 +7,7 @@ return [
     'working_dir' => '',
 
     /**
-     * Path to composer in your cPnael
+     * Path to composer in your cPanel
      */
     'composer_path' => '',
 ];
