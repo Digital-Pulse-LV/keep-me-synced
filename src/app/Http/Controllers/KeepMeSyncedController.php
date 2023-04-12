@@ -18,17 +18,23 @@ class KeepMeSyncedController extends Controller
     public function __construct()
     {
         if (empty(config('keep_me_synced.working_dir'))) {
-            throw new KeepMeSyncedException('Error while running `composer update`: no working directory set.');
+            return new JsonResponse(['error' => 'No working directory set.']);
         }
 
         if (empty(config('keep_me_synced.composer_path'))) {
-            throw new KeepMeSyncedException('Error while running `composer update`: no composer path set.');
+            return new JsonResponse(['error' => 'No composer path set.']);
         }
     }
 
+    /**
+     * @throws KeepMeSyncedException
+     */
     public function hook(Request $request): JsonResponse
     {
-        $gitCommitMsg = $request->get('head_commit')['message'] ?? 'Unknown commit msg';
+        $gitCommitMsg = $request->get('head_commit')['message'] ?? null;
+        if (!$gitCommitMsg) {
+            return new JsonResponse(['error' => 'No commit message sent.']);
+        }
 
         SlackService::deploy('Updating', 'Updating application... `' . $gitCommitMsg . '`');
 
@@ -36,14 +42,14 @@ class KeepMeSyncedController extends Controller
         if (!$runGitPull->isSuccessful()) {
             SlackService::error('Error while running git pull "' . $gitCommitMsg . '": `', $runGitPull->getErrorOutput() . '`');
 
-            return new JsonResponse(['error' => true], 500);
+            return new JsonResponse(['error' => true]);
         }
 
         $runComposer = $this->runComposer();
         if (!$runComposer->isSuccessful()) {
             SlackService::error('Error while running composer "' . $gitCommitMsg . '": `', $runComposer->getErrorOutput() . '`');
 
-            return new JsonResponse(['error' => true], 500);
+            return new JsonResponse(['error' => true]);
         }
 
         Artisan::call('optimize:clear');
