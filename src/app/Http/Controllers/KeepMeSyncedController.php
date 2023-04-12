@@ -45,7 +45,6 @@ class KeepMeSyncedController extends Controller
     private function runPull(): void
     {
         $process = new Process(['git', 'pull']);
-        $this->info('Running "git pull"');
 
         $process->run(function ($type, $buffer) {
             if ($buffer == 'Already up to date.') {
