@@ -6,7 +6,7 @@
 <p>Simply run the following command to install:</p>
 
 ```sh
-   composer require digital-pulse-lv/keep-me-sync
+   composer require digital-pulse-lv/keep-me-synced
 ```
 
 <p>Then publish the config file and adjust it as you need it:</p>

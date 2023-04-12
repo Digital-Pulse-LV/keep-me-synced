@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Http;
 use Symfony\Component\Process\Process;
 use DigitalPulse\SlackLaravel\app\Services\SlackService;
+use Illuminate\Http\JsonResponse;
 use Exception;
 
 class KeepMeSyncedController extends Controller
@@ -17,7 +18,7 @@ class KeepMeSyncedController extends Controller
 
     private bool $alreadyUpToDate = false;
 
-    public function hook(Request $request)
+    public function hook(Request $request): JsonResponse
     {
         $gitCommitMsg = $request->get('head_commit')['message'] ?? 'Unknown commit msg';
 
@@ -30,10 +31,12 @@ class KeepMeSyncedController extends Controller
         } catch (Exception $e) {
             SlackService::error('Error while syncing "' . $gitCommitMsg . '": `', $e->getMessage() . '`');
 
-            return;
+            return new JsonResponse(['An error ocurred.'], 500);
         }
 
         SlackService::deploy('Done', ':rocket: Application successfully updated: `' . $gitCommitMsg . '`');
+
+        return new JsonResponse(['Success']);
     }
 
     /**
