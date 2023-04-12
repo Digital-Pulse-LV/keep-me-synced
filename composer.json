@@ -1,0 +1,36 @@
+{
+  "name": "digital-pulse-lv/keep-me-synced",
+  "description": "A simple package to keep repos in sync with cPanel Git Version Control.",
+  "type": "library",
+  "require": {
+    "php": "^8.0",
+    "laravel/framework": "^9.0.0|^10.0.0",
+    "digital-pulse-lv/slack-laravel": "^1.1"
+  },
+  "keywords": [
+    "laravel"
+  ],
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "maurohmartinez",
+      "email": "maurohmartinez@gmail.com"
+    }
+  ],
+  "minimum-stability": "dev",
+  "autoload": {
+    "psr-4": {
+      "DigitalPulse\\KeepMeSynced\\": "src/"
+    }
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "DigitalPulse\\KeepMeSynced\\app\\Providers\\KeepMeSyncedServiceProvider"
+      ],
+      "aliases": {
+        "KeepMeSynced": "DigitalPulse\\KeepMeSynced\\Facade"
+      }
+    }
+  }
+}
