@@ -21,7 +21,7 @@ class KeepMeSyncedController extends Controller
     {
         try {
             $this->validateConfig();
-            if ($this->isCorrectBranch($request)) {
+            if (!$this->isCorrectBranch($request)) {
                 return new JsonResponse(['success' => true]);
             }
             $this->setMsg($request);
