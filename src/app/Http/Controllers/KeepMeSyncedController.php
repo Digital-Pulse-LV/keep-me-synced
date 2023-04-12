@@ -31,12 +31,12 @@ class KeepMeSyncedController extends Controller
         } catch (Exception $e) {
             SlackService::error('Error while syncing "' . $gitCommitMsg . '": `', $e->getMessage() . '`');
 
-            return new JsonResponse(['An error ocurred.'], 500);
+            return new JsonResponse(['error' => true], 500);
         }
 
         SlackService::deploy('Done', ':rocket: Application successfully updated: `' . $gitCommitMsg . '`');
 
-        return new JsonResponse(['Success']);
+        return new JsonResponse(['success' => true]);
     }
 
     /**
