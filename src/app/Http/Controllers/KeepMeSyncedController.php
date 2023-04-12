@@ -44,15 +44,16 @@ class KeepMeSyncedController extends Controller
      */
     private function runPull(): void
     {
+        $alreadyUpdated = false;
         $process = new Process(['git', 'pull']);
 
-        $process->run(function ($type, $buffer) {
+        $process->run(function ($type, $buffer) use ($alreadyUpdated) {
             if ($buffer == 'Already up to date.') {
-                $this->alreadyUpToDate = true;
+                $alreadyUpdated = true;
             }
         });
 
-        if ($process->isSuccessful() && !$this->alreadyUpToDate) {
+        if ($process->isSuccessful() && !$alreadyUpdated) {
             throw new KeepMeSyncedException('Error while running `git pull`: ' . $process->getErrorOutput());
         }
     }
@@ -63,6 +64,8 @@ class KeepMeSyncedController extends Controller
      */
     private function runComposer(): void
     {
+        $alreadyUpdated = false;
+
         if (empty(config('keep_me_synced.working_dir'))) {
             throw new KeepMeSyncedException('Error while running `composer update`: no working directory set.');
         }
@@ -72,13 +75,13 @@ class KeepMeSyncedController extends Controller
         }
 
         $process = new Process([config('keep_me_synced.composer_path'), 'update', '--no-dev', '--working-dir=' . config('keep_me_synced.working_dir')]);
-        $process->run(function ($type, $buffer) {
+        $process->run(function ($type, $buffer) use ($alreadyUpdated) {
             if ($buffer == 'Already up to date.') {
-                $this->alreadyUpToDate = true;
+                $alreadyUpdated = true;
             }
         });
 
-        if ($process->isSuccessful() && !$this->alreadyUpToDate) {
+        if ($process->isSuccessful() && !$alreadyUpdated) {
             throw new KeepMeSyncedException('Error while running `composer update`: ' . $process->getErrorOutput());
         }
     }
