@@ -20,7 +20,7 @@ class KeepMeSyncedController extends Controller
     public function hook(Request $request): JsonResponse
     {
         if (!$this->isCorrectBranch($request)) {
-            return new JsonResponse(['success' => true]);
+            return new JsonResponse();
         }
 
         try {
@@ -36,12 +36,12 @@ class KeepMeSyncedController extends Controller
         } catch (KeepMeSyncedException $e) {
             SlackService::error('Error while updating application', $this->msg . ': `' . $e->getMessage() . '`.');
 
-            return new JsonResponse(['success' => false]);
+            return new JsonResponse();
         }
 
         SlackService::deploy('Done', ':rocket: Application successfully updated: `' . $this->msg . '`');
 
-        return new JsonResponse(['success' => true]);
+        return new JsonResponse();
     }
 
     /**
