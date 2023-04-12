@@ -19,11 +19,12 @@ class KeepMeSyncedController extends Controller
      */
     public function hook(Request $request): JsonResponse
     {
+        if (!$this->isCorrectBranch($request)) {
+            return new JsonResponse(['success' => true]);
+        }
+
         try {
             $this->validateConfig();
-            if (!$this->isCorrectBranch($request)) {
-                return new JsonResponse(['success' => true]);
-            }
             $this->setMsg($request);
 
             SlackService::deploy('Updating', 'Updating application `' . $this->msg . '`');
