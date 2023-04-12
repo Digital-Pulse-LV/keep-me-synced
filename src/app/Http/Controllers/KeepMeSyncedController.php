@@ -31,6 +31,8 @@ class KeepMeSyncedController extends Controller
             Artisan::call('optimize:clear');
         } catch (KeepMeSyncedException $e) {
             SlackService::error('Error while updating application', $this->msg . ': `' . $e->getMessage() . '`.');
+
+            return new JsonResponse(['success' => false]);
         }
 
         SlackService::deploy('Done', ':rocket: Application successfully updated: `' . $this->msg . '`');
