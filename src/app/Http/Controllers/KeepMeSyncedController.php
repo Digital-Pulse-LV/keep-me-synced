@@ -5,67 +5,18 @@ namespace DigitalPulse\KeepMeSynced\app\Http\Controllers;
 use App\Http\Controllers\Controller;
 use DigitalPulse\KeepMeSynced\app\Exceptions\KeepMeSyncedException;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Http;
 use Symfony\Component\Process\Process;
 use DigitalPulse\SlackLaravel\app\Services\SlackService;
 use Illuminate\Http\JsonResponse;
-use Exception;
 
 class KeepMeSyncedController extends Controller
 {
-
-    private bool $alreadyUpToDate = false;
-
-    public function hook(Request $request): JsonResponse
-    {
-        $gitCommitMsg = $request->get('head_commit')['message'] ?? 'Unknown commit msg';
-
-        SlackService::deploy('Updating', 'Updating application... `' . $gitCommitMsg . '`');
-
-        try {
-            $this->runPull();
-            $this->runComposer();
-            Artisan::call('optimize:clear');
-        } catch (Exception $e) {
-            SlackService::error('Error while syncing "' . $gitCommitMsg . '": `', $e->getMessage() . '`');
-
-            return new JsonResponse(['error' => true], 500);
-        }
-
-        SlackService::deploy('Done', ':rocket: Application successfully updated: `' . $gitCommitMsg . '`');
-
-        return new JsonResponse(['success' => true]);
-    }
-
     /**
-     * @throws Exception
-     */
-    private function runPull(): void
-    {
-        $alreadyUpdated = false;
-        $process = new Process(['git', 'pull']);
-
-        $process->run(function ($type, $buffer) use ($alreadyUpdated) {
-            if ($buffer == 'Already up to date.') {
-                $alreadyUpdated = true;
-            }
-        });
-
-        if (!$process->isSuccessful() && !$alreadyUpdated) {
-            throw new KeepMeSyncedException('Error while running `git pull`: ' . $process->getErrorOutput());
-        }
-    }
-
-    /**
-     * @throws Exception
      * @throws KeepMeSyncedException
      */
-    private function runComposer(): void
+    public function __construct()
     {
-        $alreadyUpdated = false;
-
         if (empty(config('keep_me_synced.working_dir'))) {
             throw new KeepMeSyncedException('Error while running `composer update`: no working directory set.');
         }
@@ -73,16 +24,47 @@ class KeepMeSyncedController extends Controller
         if (empty(config('keep_me_synced.composer_path'))) {
             throw new KeepMeSyncedException('Error while running `composer update`: no composer path set.');
         }
+    }
 
-        $process = new Process([config('keep_me_synced.composer_path'), 'update', '--no-dev', '--working-dir=' . config('keep_me_synced.working_dir')]);
-        $process->run(function ($type, $buffer) use ($alreadyUpdated) {
-            if ($buffer == 'Already up to date.') {
-                $alreadyUpdated = true;
-            }
-        });
+    public function hook(Request $request): JsonResponse
+    {
+        $gitCommitMsg = $request->get('head_commit')['message'] ?? 'Unknown commit msg';
 
-        if (!$process->isSuccessful() && !$alreadyUpdated) {
-            throw new KeepMeSyncedException('Error while running `composer update`: ' . $process->getErrorOutput());
+        SlackService::deploy('Updating', 'Updating application... `' . $gitCommitMsg . '`');
+
+        $runGitPull = $this->runGitPull();
+        if (!$runGitPull->isSuccessful()) {
+            SlackService::error('Error while running git pull "' . $gitCommitMsg . '": `', $runGitPull->getErrorOutput() . '`');
+
+            return new JsonResponse(['error' => true], 500);
         }
+
+        $runComposer = $this->runComposer();
+        if (!$runComposer->isSuccessful()) {
+            SlackService::error('Error while running composer "' . $gitCommitMsg . '": `', $runComposer->getErrorOutput() . '`');
+
+            return new JsonResponse(['error' => true], 500);
+        }
+
+        Artisan::call('optimize:clear');
+        SlackService::deploy('Done', ':rocket: Application successfully updated: `' . $gitCommitMsg . '`');
+
+        return new JsonResponse(['success' => true]);
+    }
+
+    private function runGitPull(): Process
+    {
+        $process = new Process(['git', 'pull']);
+        $process->run();
+
+        return $process;
+    }
+
+    private function runComposer(): Process
+    {
+        $process = new Process([config('keep_me_synced.composer_path'), 'update', '--no-dev', '--working-dir=' . config('keep_me_synced.working_dir')]);
+        $process->run();
+
+        return $process;
     }
 }
