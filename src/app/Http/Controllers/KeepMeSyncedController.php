@@ -12,65 +12,85 @@ use Illuminate\Http\JsonResponse;
 
 class KeepMeSyncedController extends Controller
 {
-    /**
-     * @throws KeepMeSyncedException
-     */
-    public function __construct()
-    {
-        if (empty(config('keep_me_synced.working_dir'))) {
-            return new JsonResponse(['error' => 'No working directory set.']);
-        }
-
-        if (empty(config('keep_me_synced.composer_path'))) {
-            return new JsonResponse(['error' => 'No composer path set.']);
-        }
-    }
+    private string $msg;
 
     /**
      * @throws KeepMeSyncedException
      */
     public function hook(Request $request): JsonResponse
     {
-        $gitCommitMsg = $request->get('head_commit')['message'] ?? null;
-        if (!$gitCommitMsg) {
-            return new JsonResponse(['error' => 'No commit message sent.']);
+        try {
+            $this->validateConfig();
+            $this->setMsg($request);
+
+            SlackService::deploy('Updating', 'Updating application... `' . $this->msg . '`');
+
+            $this->runGitPull();
+            $this->runComposer();
+
+            Artisan::call('optimize:clear');
+        } catch (KeepMeSyncedException $e) {
+            SlackService::error('Error while updating application', $this->msg . ': `' . $e->getMessage() . '`.');
         }
 
-        SlackService::deploy('Updating', 'Updating application... `' . $gitCommitMsg . '`');
-
-        $runGitPull = $this->runGitPull();
-        if (!$runGitPull->isSuccessful()) {
-            SlackService::error('Error while running git pull "' . $gitCommitMsg . '": `', $runGitPull->getErrorOutput() . '`');
-
-            return new JsonResponse(['error' => true]);
-        }
-
-        $runComposer = $this->runComposer();
-        if (!$runComposer->isSuccessful()) {
-            SlackService::error('Error while running composer "' . $gitCommitMsg . '": `', $runComposer->getErrorOutput() . '`');
-
-            return new JsonResponse(['error' => true]);
-        }
-
-        Artisan::call('optimize:clear');
-        SlackService::deploy('Done', ':rocket: Application successfully updated: `' . $gitCommitMsg . '`');
+        SlackService::deploy('Done', ':rocket: Application successfully updated: `' . $this->msg . '`');
 
         return new JsonResponse(['success' => true]);
     }
 
-    private function runGitPull(): Process
+    /**
+     * @throws KeepMeSyncedException
+     */
+    private function validateConfig(): void
+    {
+        if (empty(config('keep_me_synced.working_dir'))) {
+            throw new KeepMeSyncedException('No working directory set.');
+        }
+
+        if (empty(config('keep_me_synced.composer_path'))) {
+            throw new KeepMeSyncedException('No composer path set.');
+        }
+    }
+
+    /**
+     * @throws KeepMeSyncedException
+     */
+    private function setMsg(Request $request)
+    {
+        $this->msg = $request->get('head_commit')['message'] ?? '';
+        if (empty($this->msg)) {
+            throw new KeepMeSyncedException('No commit message sent.');
+        }
+    }
+
+    /**
+     * @throws KeepMeSyncedException
+     */
+    private function runGitPull(): void
     {
         $process = new Process(['git', 'pull']);
         $process->run();
 
-        return $process;
+        if (!$process->isSuccessful()) {
+            throw new KeepMeSyncedException($process->getErrorOutput());
+        }
     }
 
-    private function runComposer(): Process
+    /**
+     * @throws KeepMeSyncedException
+     */
+    private function runComposer(): void
     {
-        $process = new Process([config('keep_me_synced.composer_path'), 'update', '--no-dev', '--working-dir=' . config('keep_me_synced.working_dir')]);
+        $process = new Process([
+            config('keep_me_synced.composer_path'),
+            'update',
+            '--no-dev',
+            '--working-dir=' . config('keep_me_synced.working_dir'),
+        ]);
         $process->run();
 
-        return $process;
+        if (!$process->isSuccessful()) {
+            throw new KeepMeSyncedException($process->getErrorOutput());
+        }
     }
 }
