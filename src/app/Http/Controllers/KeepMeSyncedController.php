@@ -53,7 +53,7 @@ class KeepMeSyncedController extends Controller
             }
         });
 
-        if ($process->isSuccessful() && !$alreadyUpdated) {
+        if (!$process->isSuccessful() && !$alreadyUpdated) {
             throw new KeepMeSyncedException('Error while running `git pull`: ' . $process->getErrorOutput());
         }
     }
@@ -81,7 +81,7 @@ class KeepMeSyncedController extends Controller
             }
         });
 
-        if ($process->isSuccessful() && !$alreadyUpdated) {
+        if (!$process->isSuccessful() && !$alreadyUpdated) {
             throw new KeepMeSyncedException('Error while running `composer update`: ' . $process->getErrorOutput());
         }
     }
